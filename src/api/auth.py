@@ -1,4 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends, status, Security, BackgroundTasks, Request
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Depends,
+    status,
+    Security,
+    BackgroundTasks,
+    Request,
+)
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer, HTTPBearer
 from src.schemas.users import UserCreate, Token, User, UserLogin, RequestEmail
@@ -8,6 +16,7 @@ from src.services.email import send_email
 from src.database.db import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
 
 # Реєстрація користувача
 @router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
@@ -39,13 +48,12 @@ async def register_user(
     )
     return new_user
 
+
 # Логін користувача
-@router.post("/login", response_model=Token)
-async def login_user(
-    body: UserLogin, db: Session = Depends(get_db)
-):
+@router.post("/login", response_model=Token, status_code=status.HTTP_201_CREATED)
+async def login_user(body: UserLogin, db: Session = Depends(get_db)):
     user_service = UserService(db)
-    user = await user_service.get_user_by_username(body.email)
+    user = await user_service.get_user_by_email(body.email)
     if not user or not Hash().verify_password(body.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,7 +64,8 @@ async def login_user(
     access_token = await create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.post("/request_email")
+
+@router.post("/request_email", status_code=status.HTTP_201_CREATED)
 async def request_email(
     body: RequestEmail,
     background_tasks: BackgroundTasks,
@@ -73,6 +82,7 @@ async def request_email(
             send_email, user.email, user.username, request.base_url
         )
     return {"message": "Перевірте свою електронну пошту для підтвердження"}
+
 
 @router.get("/confirmed_email/{token}")
 async def confirmed_email(token: str, db: Session = Depends(get_db)):

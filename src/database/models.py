@@ -2,16 +2,16 @@ from datetime import datetime, date
 
 from sqlalchemy import Column, Integer, String, Boolean, func, Table
 from sqlalchemy.orm import relationship, mapped_column, Mapped, DeclarativeBase
-from sqlalchemy.sql.schema import ForeignKey, PrimaryKeyConstraint
+from sqlalchemy.sql.schema import ForeignKey, PrimaryKeyConstraint, UniqueConstraint
 from sqlalchemy.sql.sqltypes import DateTime, Date
 
+
 class Base(DeclarativeBase):
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now()
     )
+
 
 class Contact(Base):
     __tablename__ = "contacts"
@@ -27,6 +27,10 @@ class Contact(Base):
         "user_id", ForeignKey("users.id", ondelete="CASCADE"), default=None
     )
     user = relationship("User", backref="notes")
+    __table_args__ = (
+        UniqueConstraint("first_name", "last_name", "user_id", name="unique_contact"),
+    )
+
 
 class User(Base):
     __tablename__ = "users"

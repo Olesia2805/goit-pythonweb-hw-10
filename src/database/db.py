@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from src.conf.config import settings
+from src.conf import messages
+
 
 class DatabaseSessionManager:
     def __init__(self, url: str):
@@ -19,7 +21,7 @@ class DatabaseSessionManager:
     @contextlib.asynccontextmanager
     async def session(self):
         if self._session_maker is None:
-            raise Exception("Database session is not initialized")
+            raise Exception(messages.DATABASE_SESSION_NOT_INITIALIZED)
         session = self._session_maker()
         try:
             yield session
@@ -29,7 +31,9 @@ class DatabaseSessionManager:
         finally:
             await session.close()
 
+
 sessionmanager = DatabaseSessionManager(settings.DB_URL)
+
 
 async def get_db():
     async with sessionmanager.session() as session:
